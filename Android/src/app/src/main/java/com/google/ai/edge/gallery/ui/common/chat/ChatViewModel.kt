@@ -19,12 +19,15 @@ package com.google.ai.edge.gallery.ui.common.chat
 import android.util.Log
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.ai.edge.gallery.common.processLlmResponse
 import com.google.ai.edge.gallery.data.ConfigKeys
 import com.google.ai.edge.gallery.data.Model
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 private const val TAG = "AGChatViewModel"
 
@@ -62,6 +65,18 @@ abstract class ChatViewModel() : ViewModel() {
     }
     newMessages.add(message)
     _uiState.update { _uiState.value.copy(messagesByModel = newMessagesByModel) }
+  }
+
+  fun showTempMessage(model: Model, content: String, durationMs: Long = 3000L) {
+    val msg = ChatMessageInfo(content = content)
+    addMessage(model = model, message = msg)
+    viewModelScope.launch {
+      delay(durationMs)
+      val index = getMessageIndex(model, msg)
+      if (index >= 0) {
+        removeMessageAt(model, index)
+      }
+    }
   }
 
   fun insertMessageAfter(model: Model, anchorMessage: ChatMessage, messageToAdd: ChatMessage) {

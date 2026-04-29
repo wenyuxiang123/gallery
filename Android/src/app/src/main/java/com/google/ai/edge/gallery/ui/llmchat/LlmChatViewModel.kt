@@ -20,8 +20,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.google.ai.edge.gallery.common.SystemPromptHelper
 import com.google.ai.edge.gallery.data.ConfigKeys
 import com.google.ai.edge.gallery.data.Model
+import com.google.ai.edge.gallery.data.SystemPromptRepository
 import com.google.ai.edge.gallery.data.Task
 import com.google.ai.edge.gallery.runtime.runtimeHelper
 import com.google.ai.edge.gallery.ui.common.chat.ChatMessageAudioClip
@@ -41,12 +43,52 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 private const val TAG = "AGLlmChatViewModel"
 
 @OptIn(ExperimentalApi::class)
-open class LlmChatViewModelBase() : ChatViewModel() {
+open class LlmChatViewModelBase(
+  private val systemPromptRepository: SystemPromptRepository? = null
+) : ChatViewModel() {
+  private val _uiSystemPrompt = MutableStateFlow("")
+  val uiSystemPrompt = _uiSystemPrompt.asStateFlow()
+
+  fun setUISystemPrompt(newPrompt: String) {
+    _uiSystemPrompt.value = newPrompt
+  }
+
+  fun loadSystemPrompt(task: Task) {
+    viewModelScope.launch {
+      systemPromptRepository.let { repo ->
+        val effectivePrompt = SystemPromptHelper.getEffectiveSystemPrompt(repo, task)
+        _uiSystemPrompt.value = effectivePrompt
+      }
+    }
+  }
+
+  fun applySystemPromptChange(
+    task: Task,
+    model: Model,
+    newPrompt: String,
+    systemPromptUpdatedMessage: String,
+  ) {
+    _uiSystemPrompt.value = newPrompt
+    viewModelScope.launch {
+      systemPromptRepository?.updateSystemPrompt(task.id, newPrompt)
+      resetSession(
+        task = task,
+        model = model,
+        systemInstruction = Contents.of(newPrompt),
+        supportImage = true,
+        supportAudio = true,
+        onDone = { showTempMessage(model, systemPromptUpdatedMessage) },
+      )
+    }
+  }
+
   fun generateResponse(
     model: Model,
     input: String,
@@ -341,8 +383,14 @@ open class LlmChatViewModelBase() : ChatViewModel() {
   }
 }
 
-@HiltViewModel class LlmChatViewModel @Inject constructor() : LlmChatViewModelBase()
+@HiltViewModel
+class LlmChatViewModel @Inject constructor(systemPromptRepository: SystemPromptRepository) :
+  LlmChatViewModelBase(systemPromptRepository)
 
-@HiltViewModel class LlmAskImageViewModel @Inject constructor() : LlmChatViewModelBase()
+@HiltViewModel
+class LlmAskImageViewModel @Inject constructor(systemPromptRepository: SystemPromptRepository) :
+  LlmChatViewModelBase(systemPromptRepository)
 
-@HiltViewModel class LlmAskAudioViewModel @Inject constructor() : LlmChatViewModelBase()
+@HiltViewModel
+class LlmAskAudioViewModel @Inject constructor(systemPromptRepository: SystemPromptRepository) :
+  LlmChatViewModelBase(systemPromptRepository)

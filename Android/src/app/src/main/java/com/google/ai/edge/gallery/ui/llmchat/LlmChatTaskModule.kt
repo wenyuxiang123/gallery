@@ -44,6 +44,7 @@ import com.google.ai.edge.gallery.data.Task
 import com.google.ai.edge.gallery.runtime.runtimeHelper
 import com.google.ai.edge.gallery.ui.theme.emptyStateContent
 import com.google.ai.edge.gallery.ui.theme.emptyStateTitle
+import com.google.ai.edge.litertlm.Contents
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -75,15 +76,18 @@ class LlmChatTask @Inject constructor() : CustomTask {
     context: Context,
     coroutineScope: CoroutineScope,
     model: Model,
+    systemInstruction: Contents?,
     onDone: (String) -> Unit,
   ) {
     model.runtimeHelper.initialize(
       context = context,
       model = model,
+      taskId = task.id,
       supportImage = false,
       supportAudio = false,
       onDone = onDone,
       coroutineScope = coroutineScope,
+      systemInstruction = systemInstruction,
     )
   }
 
@@ -157,15 +161,18 @@ class LlmAskImageTask @Inject constructor() : CustomTask {
     context: Context,
     coroutineScope: CoroutineScope,
     model: Model,
+    systemInstruction: Contents?,
     onDone: (String) -> Unit,
   ) {
     model.runtimeHelper.initialize(
       context = context,
       model = model,
+      taskId = task.id,
       supportImage = true,
       supportAudio = false,
       onDone = onDone,
       coroutineScope = coroutineScope,
+      systemInstruction = systemInstruction,
     )
   }
 
@@ -222,15 +229,18 @@ class LlmAskAudioTask @Inject constructor() : CustomTask {
     context: Context,
     coroutineScope: CoroutineScope,
     model: Model,
+    systemInstruction: Contents?,
     onDone: (String) -> Unit,
   ) {
     model.runtimeHelper.initialize(
       context = context,
       model = model,
+      taskId = task.id,
       supportImage = false,
       supportAudio = true,
       onDone = onDone,
       coroutineScope = coroutineScope,
+      systemInstruction = systemInstruction,
     )
   }
 
