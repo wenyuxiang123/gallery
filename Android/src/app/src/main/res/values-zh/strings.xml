@@ -303,7 +303,7 @@
   <string name="edit_all">全部编辑</string>
   <string name="edit_all_prompt">批量编辑所有提示词</string>
   <string name="tap_to_change_background_color">点击更换背景色</string>
-  <string name="enter_prompt_for_image_%d">为第 %d 张图片输入提示词</string>
+  <string name="enter_prompt_for_image">为第 %d 张图片输入提示词</string>
   <string name="no_cutouts_collected_description">在画布上收集一些剪切内容后再回来</string>
 
   <!-- 移动操作 -->
